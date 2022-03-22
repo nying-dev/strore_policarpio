@@ -63,7 +63,7 @@ sig = sigmoid_kernel(tfv_policarpio,tfv_policarpio)
 #indices
 indices = pd.Series(policarpio_clean.index,index=policarpio_clean['PRODUCTNAME']).drop_duplicates()
 
-@app.route('/',methods=['POST'])
+@app.route('/',methods=['GET'])
 def test():
 	c=policarpio_clean.to_json(orient="records")
 	return jsonify(json.loads(c))
