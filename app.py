@@ -17,7 +17,7 @@ import re
 #
 from ast import literal_eval
 import collections
-from IPython.display import display
+
 
 store =''
 #data food data set
