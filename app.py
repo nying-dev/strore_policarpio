@@ -21,7 +21,7 @@ import collections
 
 store =''
 #data food data set
-allergy_food= pd.read_csv("Datasets/FoodData.csv", encoding= 'unicode_escape')
+allergy_food= pd.read_csv("FoodData.csv", encoding= 'unicode_escape')
 food = allergy_food['Food'].tolist()
 allergy = allergy_food['Allergy'].tolist()
 aller_indices = pd.Series(allergy_food.index,index = allergy_food['Allergy']).drop_duplicates()
@@ -29,7 +29,7 @@ aller_indices = pd.Series(allergy_food.index,index = allergy_food['Allergy']).dr
 #get data
 
 #dataSetStore=pd.concat(map(pd.read_csv, ["Datasets/Policarpio_Store_Inventory.csv", "Datasets/Mycols_Store_inventory.csv"]), ignore_index=True)
-dataSetStore = pd.read_csv("Datasets/Policarpio_Store_Inventory.csv")
+dataSetStore = pd.read_csv("Policarpio_Store_Inventory.csv")
 
 #clean column
 policarpio_clean = dataSetStore.drop(columns=['STOCKQUANTITY','INVENTORYVALUE'])
