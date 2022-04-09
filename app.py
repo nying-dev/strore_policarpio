@@ -46,7 +46,7 @@ def c_merge(firstword,secondword):
    df = firstword + ' ' + secondword
    return df
 
-for_price_clean = c_merge(policarpio_clean['PRODUCTDESCRIPTION'],policarpio_clean['PRODUCTNAME'])
+for_price_clean = policarpio_clean['PRODUCTDESCRIPTION']
 #clean nan word
 print(type(for_price_clean))
 policarpio_clean['INGREDIENTS'] = policarpio_clean['INGREDIENTS'].fillna('')
