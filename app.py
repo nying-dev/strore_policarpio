@@ -66,8 +66,9 @@ app = Flask(__name__)
 
 @app.route('/',methods=['GET'])
 def test():
-	c=policarpio_clean.to_json(orient="records")
-	return jsonify(json.loads(c))
+        quantity = request.args.get('quantity')
+        c=policarpio_clean.to_json(orient="records")
+        return jsonify((json.loads(c))[:int(quantity)])
 
 @app.route('/recommend',methods=['POST'])
 def recommend_fun():
