@@ -57,7 +57,7 @@ tfv_policarpio = tfv.fit_transform(policarpio_clean['INGREDIENTS'])
 
 #sigmoid computation
 sig_for_price = sigmoid_kernel (tfv_price,tfv_price)
-sig = sigmoid_kernel(tfv_policarpio,tfv_policarpio)
+sig = np.genfromtxt('policarpio_sigmoid.csv',delimiter=',')
 
 #indices
 indices = pd.Series(policarpio_clean.index,index=policarpio_clean['PRODUCTNAME']).drop_duplicates()
