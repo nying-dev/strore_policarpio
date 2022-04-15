@@ -150,25 +150,25 @@ def get_health():
 	   df=rando_item.to_json(orient="records")
 	   data = json.loads(df)
 	   return jsonify(data)
-   
-
 
 '''check if item is good for you'''
 @app.route('/allergy',methods=['POST'])
 def allergy_for():
 	foods=[]
+	corpus=[]
 	#request_data =request.get_json()
 	item = request.form.get('item')
 	allergy = request.form.getlist('allergy')
 	if allergy and item:
-	      array = literal_eval(allergy[0])
-	      inx = aller_indices[array].values
+	      '''array = literal_eval(allergy[0])'''
+	      inx = aller_indices[allergy].values
 	      idx = indices[item]
 	      item_ingredients = policarpio_clean['INGREDIENTS'][idx]
-	      item_ingredients =re.sub('[^A-Za-z0-9]+', ' ', item_ingredients)
 	      for i in inx:
 	         foods.append(food[i].lower())
-	      is_not_good = any(item for item in foods if item in (item_ingredients.lower()).split())
+	      is_not_good = any(item for item in foods if item in\
+              item_ingredients.lower() and policarpio_clean['CATEGORY'][idx] not in \
+              ['Personal Care','Household Care'])
 	      return str(is_not_good)
 	else:
 	      return str(False)
