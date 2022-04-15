@@ -160,8 +160,8 @@ def allergy_for():
 	item = request.form.get('item')
 	allergy = request.form.getlist('allergy')
 	if allergy and item:
-	      '''array = literal_eval(allergy[0])'''
-	      inx = aller_indices[allergy].values
+	      array = literal_eval(allergy[0])
+	      inx = aller_indices[array].values
 	      idx = indices[item]
 	      item_ingredients = policarpio_clean['INGREDIENTS'][idx]
 	      for i in inx:
