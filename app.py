@@ -64,6 +64,10 @@ indices = pd.Series(policarpio_clean.index,index=policarpio_clean['PRODUCTNAME']
 
 app = Flask(__name__)
 
+def clean_word(word):
+    stripWord=word.strip()
+    return " ".join(stripWord.split())
+
 @app.route('/',methods=['GET'])
 def test():
         quantity = request.args.get('quantity')
@@ -136,7 +140,7 @@ def get_health():
 	   #list of ingredients not for have allergy
 	   for i in inx:
 	     foods.append(food[i].lower())
-	   bad = items['INGREDIENTS'].apply(lambda x: any(item for item in foods if item in x.lower()))
+	   bad = items['INGREDIENTS'].apply(lambda x: any(item for item in foods if clean_word(item) in x.lower()))
 	   cat_food = items.iloc[np.where(bad==False)[0]]
 	   df=cat_food.to_json(orient="records")
 	   data = json.loads(df)
@@ -166,7 +170,7 @@ def allergy_for():
 	      item_ingredients = policarpio_clean['INGREDIENTS'][idx]
 	      for i in inx:
 	         foods.append(food[i].lower())
-	      is_not_good = any(item for item in foods if item in\
+	      is_not_good = any(item for item in foods if clean_word(item) in\
               item_ingredients.lower() and policarpio_clean['CATEGORY'][idx] not in \
               ['Personal Care','Household Care'])
 	      return str(is_not_good)
