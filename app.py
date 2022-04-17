@@ -10,18 +10,21 @@ import math
 from flask import Flask,request,jsonify
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import sigmoid_kernel
+from sklearn.metrics.pairwise import cosine_similarity
+
 import pandas as pd
 import numpy as np
 import random 
 import re
 #
+
 from ast import literal_eval
 import collections
-
-
+from IPython.display import display
+app = Flask(__name__)
 store =''
 #data food data set
-allergy_food= pd.read_csv("FoodData.csv", encoding= 'unicode_escape')
+allergy_food= pd.read_csv("Datasets/FoodData.csv", encoding= 'unicode_escape')
 food = allergy_food['Food'].tolist()
 allergy = allergy_food['Allergy'].tolist()
 aller_indices = pd.Series(allergy_food.index,index = allergy_food['Allergy']).drop_duplicates()
@@ -30,6 +33,7 @@ aller_indices = pd.Series(allergy_food.index,index = allergy_food['Allergy']).dr
 
 #dataSetStore=pd.concat(map(pd.read_csv, ["Datasets/Policarpio_Store_Inventory.csv", "Datasets/Mycols_Store_inventory.csv"]), ignore_index=True)
 dataSetStore = pd.read_csv("Policarpio_Store_Inventory.csv")
+app = Flask(__name__)
 
 #clean column
 policarpio_clean = dataSetStore.drop(columns=['STOCKQUANTITY','INVENTORYVALUE'])
@@ -38,7 +42,7 @@ policarpio_clean = dataSetStore.drop(columns=['STOCKQUANTITY','INVENTORYVALUE'])
 policarpio_clean.drop(policarpio_clean.filter(regex="Unnamed"),axis=1, inplace=True)
 
 #clean words
-tfv = TfidfVectorizer(min_df=3,max_features=None,
+tfv = TfidfVectorizer(
                   strip_accents='unicode',analyzer='word',token_pattern=r'\w{1,}',
                   ngram_range=(1,3),stop_words='english')
 
@@ -46,7 +50,7 @@ def c_merge(firstword,secondword):
    df = firstword + ' ' + secondword
    return df
 
-for_price_clean = policarpio_clean['PRODUCTDESCRIPTION']
+for_price_clean =policarpio_clean['PRODUCTDESCRIPTION']
 #clean nan word
 print(type(for_price_clean))
 policarpio_clean['INGREDIENTS'] = policarpio_clean['INGREDIENTS'].fillna('')
@@ -62,8 +66,6 @@ sig = np.genfromtxt('policarpio_sigmoid.csv',delimiter=',')
 #indices
 indices = pd.Series(policarpio_clean.index,index=policarpio_clean['PRODUCTNAME']).drop_duplicates()
 
-app = Flask(__name__)
-
 def clean_word(word):
     word=word.lower()
     stripWord=word.strip()
@@ -71,58 +73,58 @@ def clean_word(word):
 
 @app.route('/',methods=['GET'])
 def test():
-        quantity = request.args.get('quantity')
+        '''quantity = request.args.get('quantity')'''
         c=policarpio_clean.to_json(orient="records")
-        return jsonify((json.loads(c))[:int(quantity)])
+        return jsonify((json.loads(c))[:int(5)])
 
 @app.route('/recommend',methods=['POST'])
 def recommend_fun():
-	item = request.form.get('item')          
-	list_rec=give_rec(item)
-	df=list_rec.to_json(orient="records")
-	data = json.loads(df)
-	return jsonify(data[:10])
+  item = request.form.get('item')          
+  list_rec=give_rec(item)
+  df=list_rec.to_json(orient="records")
+  data = json.loads(df)
+  return jsonify(data[:10])
 
 def give_rec(title,sig=sig):
 #index of item
-	idx=indices[title]
-	print('index: '+str(idx))
-	sig_scores=list(enumerate(sig[idx]))
-	print('sig score list: '+str(sig_scores))
-	#sorted score of sigmoid
-	sig_scores=sorted(sig_scores,key=lambda x:x[1],reverse=True)
-	print('sig scores sorted: '+str(sig_scores))
-	#list zero to 10 list highest score
-	sig_scores=sig_scores
-	#get list in sig_scores
-	policarpio_indices=[i[0] for i in sig_scores]
-	print(policarpio_indices)
-	#return the list of policarpio clean
-	return policarpio_clean.iloc[policarpio_indices]
+  idx=indices[title]
+  print('index: '+str(idx))
+  sig_scores=list(enumerate(sig[idx]))
+  print('sig score list: '+str(sig_scores))
+  #sorted score of sigmoid
+  sig_scores=sorted(sig_scores,key=lambda x:x[1],reverse=True)
+  print('sig scores sorted: '+str(sig_scores))
+  #list zero to 10 list highest score
+  sig_scores=sig_scores
+  #get list in sig_scores
+  policarpio_indices=[i[0] for i in sig_scores]
+  print(policarpio_indices)
+  #return the list of policarpio clean
+  return policarpio_clean.iloc[policarpio_indices]
 
 
 '''recommended item '''
 @app.route('/cart',methods=['POST'])
 def list_item():
-	sig_enum=[]
-	hold= request.form.getlist('list')
-	lists = literal_eval(hold[0])
-	ds={}
-	#items
-	indexes = list(indices[lists])
-	price_items = policarpio_clean.iloc[indexes]
-	#enumerate list and sorted
-	for i in range(len(indexes)):
-	   enum = list(enumerate(sig_for_price[indexes[i]]))
-	   enum = sorted(enum,key=lambda x:x[1],reverse=True)
-	   enum = enum[0:10]
-	   item = [tupl[0] for tupl in enum]
-	   item = policarpio_clean.iloc[item].to_json(orient="records")
-	   item_json = json.loads(item)
-	   check_price =[y for y in item_json if  float(y.get('PRICE'))
-	   < float(policarpio_clean['PRICE'][indexes[i]])] 
-	   sig_enum.append(sorted(check_price, key = lambda x:x['PRICE'],reverse=True )) 
-	return jsonify(sig_enum)
+  sig_enum=[]
+  hold= request.form.getlist('list')
+  '''lists = literal_eval(hold[0])'''
+  ds={}
+  #items
+  indexes = list(indices[hold])
+  price_items = policarpio_clean.iloc[indexes]
+  #enumerate list and sorted
+  for i in range(len(indexes)):
+     enum = list(enumerate(sig_for_price[indexes[i]]))
+     enum = sorted(enum,key=lambda x:x[1],reverse=True)
+     enum = enum[0:10]
+     item = [tupl[0] for tupl in enum]
+     item = policarpio_clean.iloc[item].to_json(orient="records")
+     item_json = json.loads(item)
+     check_price =[y for y in item_json if  float(y.get('PRICE'))
+     < float(policarpio_clean['PRICE'][indexes[i]])] 
+     sig_enum.append(sorted(check_price, key = lambda x:x['PRICE'],reverse=True )) 
+  return jsonify(sig_enum)
 
 
 '''filtering item with recommend'''
@@ -131,8 +133,8 @@ def get_health():
   foods=[]
   user_aller = request.form.getlist('allergy')
   item= request.form.get('item')
-  '''user_allergy = literal_eval(user_aller[0])'''
-  if user_aller and item:
+  user_allergy = literal_eval(user_aller[0])
+  if user_allergy and item:
      #get item category
      item_category = policarpio_clean['CATEGORY'][indices[item]] 
      items = give_rec(item)
@@ -161,6 +163,8 @@ def get_health():
      df=rando_item.to_json(orient="records")
      data = json.loads(df)
      return jsonify(data)
+   
+
 
 '''check if item is good for you'''
 @app.route('/allergy',methods=['POST'])
@@ -172,8 +176,8 @@ def allergy_for():
   item = request.form.get("item")
   allergy = request.form.getlist('allergy')
   if allergy and item:
-        '''array = literal_eval(allergy[0])'''
-        inx = aller_indices[allergy].values
+        array = literal_eval(allergy[0])
+        inx = aller_indices[array].values
         idx = indices[item]
         item_ingredients = policarpio_clean['INGREDIENTS'][idx]
         for i in inx:
@@ -189,21 +193,18 @@ def allergy_for():
 
 @app.route('/history',methods=['POST'])
 def history_recommend():
-	_list = request.json['list']
-	c = collections.Counter([x for sublist in _list for x in sublist])
-	new_c = pd.Series(c.keys(),index = c.values())
-	return jsonify(list(new_c.sort_index(ascending=False)))
-
-
-
-    
-
-
-
-#for doc in docs:
-    #print('{} =>{}'.format(doc.id,doc.to_dict()))
-
+  _list = request.json['list']
+  c = collections.Counter([x for sublist in _list for x in sublist])
+  new_c = pd.Series(c.keys(),index = c.values())
+  return jsonify(list(new_c.sort_index(ascending=False)))
 
 #fire base 
 if __name__ =='__main__':
     app.run(debug=True)
+
+
+
+
+
+#fire base 
+
