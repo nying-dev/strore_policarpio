@@ -65,6 +65,7 @@ indices = pd.Series(policarpio_clean.index,index=policarpio_clean['PRODUCTNAME']
 app = Flask(__name__)
 
 def clean_word(word):
+    word=word.lower()
     stripWord=word.strip()
     return " ".join(stripWord.split())
 
@@ -127,55 +128,63 @@ def list_item():
 '''filtering item with recommend'''
 @app.route('/health',methods=['POST'])
 def get_health():
-	foods=[]
-	user_aller = request.form.getlist('allergy')
-	item= request.form.get('item')
-	user_allergy = literal_eval(user_aller[0])
-	if user_allergy and item:
-	   #get item category
-	   item_category = policarpio_clean['CATEGORY'][indices[item]] 
-	   items = give_rec(item)
-	   items = items.iloc[np.where((items['CATEGORY'] == item_category)==True)]
-	   inx  = aller_indices[user_allergy].values
-	   #list of ingredients not for have allergy
-	   for i in inx:
-	     foods.append(food[i].lower())
-	   bad = items['INGREDIENTS'].apply(lambda x: any(item for item in foods if clean_word(item) in x.lower()))
-	   cat_food = items.iloc[np.where(bad==False)[0]]
-	   df=cat_food.to_json(orient="records")
-	   data = json.loads(df)
-	   return jsonify(data)
-	else:
-	   randomlist=[]
-	   for i in range(0,20):
-	      n = random.randint(1,len(policarpio_clean))
-	      randomlist.append(n)
-	   rando_item=policarpio_clean.iloc[randomlist]
-	   df=rando_item.to_json(orient="records")
-	   data = json.loads(df)
-	   return jsonify(data)
+  foods=[]
+  user_aller = request.form.getlist('allergy')
+  item= request.form.get('item')
+  '''user_allergy = literal_eval(user_aller[0])'''
+  if user_aller and item:
+     #get item category
+     item_category = policarpio_clean['CATEGORY'][indices[item]] 
+     items = give_rec(item)
+     items = items.iloc[np.where((items['CATEGORY'] == item_category)==True)]
+     inx  = aller_indices[user_aller].values
+     #list of ingredients not for have allergy
+     for i in inx:
+       foods.append(food[i])
+           
+     bad = items['INGREDIENTS'].apply(lambda x: any(i for i in \
+           [clean_word(y) for y in x.split(",")] if i in [clean_word(heal) \
+           for heal in foods]))
+     
+     cat_food = items.iloc[np.where(bad==False)[0]]
+     df=cat_food.to_json(orient="records")
+     data = json.loads(df)
+     '''df=bad.to_json(orient="records")
+     data = json.loads(df)'''
+     return jsonify(data)
+  else:
+     randomlist=[]
+     for i in range(0,20):
+        n = random.randint(1,len(policarpio_clean))
+        randomlist.append(n)
+     rando_item=policarpio_clean.iloc[randomlist]
+     df=rando_item.to_json(orient="records")
+     data = json.loads(df)
+     return jsonify(data)
 
 '''check if item is good for you'''
 @app.route('/allergy',methods=['POST'])
 def allergy_for():
-	foods=[]
-	corpus=[]
-	#request_data =request.get_json()
-	item = request.form.get('item')
-	allergy = request.form.getlist('allergy')
-	if allergy and item:
-	      array = literal_eval(allergy[0])
-	      inx = aller_indices[array].values
-	      idx = indices[item]
-	      item_ingredients = policarpio_clean['INGREDIENTS'][idx]
-	      for i in inx:
-	         foods.append(food[i].lower())
-	      is_not_good = any(item for item in foods if clean_word(item) in\
-              item_ingredients.lower() and policarpio_clean['CATEGORY'][idx] not in \
-              ['Personal Care','Household Care'])
-	      return str(is_not_good)
-	else:
-	      return str(False)
+  foods=[]
+  corpus=[]
+  warning=[]
+  request_data =request.get_json()
+  item = request.form.get("item")
+  allergy = request.form.getlist('allergy')
+  if allergy and item:
+        '''array = literal_eval(allergy[0])'''
+        inx = aller_indices[allergy].values
+        idx = indices[item]
+        item_ingredients = policarpio_clean['INGREDIENTS'][idx]
+        for i in inx:
+           foods.append(food[i])
+        for ing in [clean_word(ingredient) for ingredient in item_ingredients.split(',')]:
+                 if ing in [clean_word(i) for i in foods ] and policarpio_clean['CATEGORY'][idx] not in ['Personal Care','Household Care']:
+                    warning.append(ing)
+        is_good = len(warning) > 0
+        return jsonify([is_good,warning])
+  else:
+        return str(False)
 
 
 @app.route('/history',methods=['POST'])
