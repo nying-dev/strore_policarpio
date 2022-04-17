@@ -20,8 +20,8 @@ import re
 
 from ast import literal_eval
 import collections
-from IPython.display import display
-app = Flask(__name__)
+
+
 store =''
 #data food data set
 allergy_food= pd.read_csv("Datasets/FoodData.csv", encoding= 'unicode_escape')
@@ -33,7 +33,7 @@ aller_indices = pd.Series(allergy_food.index,index = allergy_food['Allergy']).dr
 
 #dataSetStore=pd.concat(map(pd.read_csv, ["Datasets/Policarpio_Store_Inventory.csv", "Datasets/Mycols_Store_inventory.csv"]), ignore_index=True)
 dataSetStore = pd.read_csv("Policarpio_Store_Inventory.csv")
-app = Flask(__name__)
+
 
 #clean column
 policarpio_clean = dataSetStore.drop(columns=['STOCKQUANTITY','INVENTORYVALUE'])
@@ -65,7 +65,7 @@ sig = np.genfromtxt('policarpio_sigmoid.csv',delimiter=',')
 
 #indices
 indices = pd.Series(policarpio_clean.index,index=policarpio_clean['PRODUCTNAME']).drop_duplicates()
-
+app = Flask(__name__)
 def clean_word(word):
     word=word.lower()
     stripWord=word.strip()
